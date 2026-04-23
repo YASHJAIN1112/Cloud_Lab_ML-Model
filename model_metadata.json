@@ -1,0 +1,63 @@
+{
+  "target": "maintenance_required",
+  "features": [
+    "machine_id",
+    "temperature",
+    "vibration",
+    "humidity",
+    "pressure",
+    "energy_consumption",
+    "machine_status",
+    "anomaly_flag",
+    "predicted_remaining_life",
+    "failure_type",
+    "downtime_risk",
+    "hour",
+    "day_of_week"
+  ],
+  "categorical_columns": [
+    "failure_type"
+  ],
+  "numerical_columns": [
+    "machine_id",
+    "temperature",
+    "vibration",
+    "humidity",
+    "pressure",
+    "energy_consumption",
+    "machine_status",
+    "anomaly_flag",
+    "predicted_remaining_life",
+    "downtime_risk",
+    "hour",
+    "day_of_week"
+  ],
+  "accuracy": 1.0,
+  "report": {
+    "0": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 16061.0
+    },
+    "1": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 3939.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 20000.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 20000.0
+    }
+  }
+}

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Manufacturing Predictor</title>
+  <style>
+    :root {
+      --bg1: #f4f7ff;
+      --bg2: #e8fff8;
+      --text: #10202f;
+      --card: #ffffff;
+      --primary: #0b6e4f;
+      --accent: #1e90ff;
+      --muted: #5e6d7a;
+      --border: #d6e0ea;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 10% 10%, var(--bg2), var(--bg1));
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .card {
+      width: min(900px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(16, 32, 47, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.7rem;
+    }
+
+    p {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+
+    button {
+      margin-top: 16px;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      background: linear-gradient(120deg, var(--primary), var(--accent));
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #f0f7ff;
+      border: 1px solid #cde3ff;
+      font-weight: 600;
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .card { padding: 16px; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Maintenance Prediction</h1>
+    <p>Enter machine telemetry values to predict whether maintenance is required.</p>
+
+    <form id="predictForm">
+      <div class="grid">
+        <div><label>Timestamp</label><input name="timestamp" type="datetime-local" required /></div>
+        <div><label>Machine ID</label><input name="machine_id" type="number" required /></div>
+        <div><label>Temperature</label><input name="temperature" type="number" step="0.01" required /></div>
+        <div><label>Vibration</label><input name="vibration" type="number" step="0.01" required /></div>
+        <div><label>Humidity</label><input name="humidity" type="number" step="0.01" required /></div>
+        <div><label>Pressure</label><input name="pressure" type="number" step="0.01" required /></div>
+        <div><label>Energy Consumption</label><input name="energy_consumption" type="number" step="0.01" required /></div>
+        <div><label>Machine Status</label><input name="machine_status" type="number" required /></div>
+        <div><label>Anomaly Flag</label><input name="anomaly_flag" type="number" required /></div>
+        <div><label>Predicted Remaining Life</label><input name="predicted_remaining_life" type="number" required /></div>
+        <div>
+          <label>Failure Type</label>
+          <select name="failure_type">
+            <option>Normal</option>
+            <option>Vibration Issue</option>
+            <option>Overheating</option>
+            <option>Pressure Drop</option>
+          </select>
+        </div>
+        <div><label>Downtime Risk</label><input name="downtime_risk" type="number" step="0.01" required /></div>
+      </div>
+      <button type="submit">Predict</button>
+    </form>
+
+    <div id="result"></div>
+  </main>
+
+  <script>
+    const form = document.getElementById("predictForm");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+
+      const numericFields = [
+        "machine_id", "temperature", "vibration", "humidity", "pressure",
+        "energy_consumption", "machine_status", "anomaly_flag",
+        "predicted_remaining_life", "downtime_risk"
+      ];
+
+      numericFields.forEach((key) => {
+        data[key] = Number(data[key]);
+      });
+
+      try {
+        const response = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "Prediction failed.");
+        }
+
+        const label = payload.maintenance_required_prediction === 1
+          ? "Maintenance Required"
+          : "No Immediate Maintenance";
+
+        result.style.display = "block";
+        result.textContent = `${label} (probability: ${payload.maintenance_required_probability})`;
+      } catch (error) {
+        result.style.display = "block";
+        result.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
