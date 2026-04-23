@@ -4,15 +4,20 @@ from pathlib import Path
 import joblib
 import pandas as pd
 import streamlit as st
+from model import train_and_save_model
 
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "model.pkl"
 
 
-@st.cache_resource
 def load_model():
-    return joblib.load(MODEL_PATH)
+    try:
+        return joblib.load(MODEL_PATH)
+    except Exception:
+        # Rebuild model.pkl in the current environment to avoid sklearn pickle mismatch.
+        train_and_save_model()
+        return joblib.load(MODEL_PATH)
 
 
 def prepare_input(payload: dict) -> pd.DataFrame:
@@ -92,7 +97,22 @@ def main() -> None:
             st.subheader("Input Payload")
             st.json(payload)
         except Exception as exc:
-            st.exception(exc)
+            if "_fill_dtype" in str(exc):
+                st.warning("Detected model compatibility issue. Retraining model for this runtime...")
+                train_and_save_model()
+                refreshed_model = load_model()
+                prediction = int(refreshed_model.predict(frame)[0])
+                probability = float(refreshed_model.predict_proba(frame)[0][1])
+
+                if prediction == 1:
+                    st.error(f"Maintenance Required (probability: {probability:.4f})")
+                else:
+                    st.success(f"No Immediate Maintenance (probability: {probability:.4f})")
+
+                st.subheader("Input Payload")
+                st.json(payload)
+            else:
+                st.exception(exc)
 
 
 if __name__ == "__main__":
