@@ -9,6 +9,7 @@ from model import train_and_save_model
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "model.pkl"
+DATA_PATH = BASE_DIR / "smart_manufacturing_data.csv"
 
 
 def load_model():
@@ -18,6 +19,21 @@ def load_model():
         # Rebuild model.pkl in the current environment to avoid sklearn pickle mismatch.
         train_and_save_model()
         return joblib.load(MODEL_PATH)
+
+
+def ensure_model_ready():
+    model = load_model()
+
+    try:
+        # Validate pipeline compatibility with the current sklearn runtime.
+        sample = pd.read_csv(DATA_PATH, nrows=1)
+        sample = sample.drop(columns=["maintenance_required"], errors="ignore")
+        sample_frame = prepare_input(sample.to_dict(orient="records")[0])
+        model.predict(sample_frame)
+        return model
+    except Exception:
+        train_and_save_model()
+        return load_model()
 
 
 def prepare_input(payload: dict) -> pd.DataFrame:
@@ -35,7 +51,7 @@ def main() -> None:
     st.title("Smart Manufacturing Maintenance Predictor")
     st.caption("Predict whether maintenance is required using trained ML model from model.pkl")
 
-    model = load_model()
+    model = ensure_model_ready()
 
     with st.form("prediction_form"):
         c1, c2, c3 = st.columns(3)
@@ -97,22 +113,7 @@ def main() -> None:
             st.subheader("Input Payload")
             st.json(payload)
         except Exception as exc:
-            if "_fill_dtype" in str(exc):
-                st.warning("Detected model compatibility issue. Retraining model for this runtime...")
-                train_and_save_model()
-                refreshed_model = load_model()
-                prediction = int(refreshed_model.predict(frame)[0])
-                probability = float(refreshed_model.predict_proba(frame)[0][1])
-
-                if prediction == 1:
-                    st.error(f"Maintenance Required (probability: {probability:.4f})")
-                else:
-                    st.success(f"No Immediate Maintenance (probability: {probability:.4f})")
-
-                st.subheader("Input Payload")
-                st.json(payload)
-            else:
-                st.exception(exc)
+            st.exception(exc)
 
 
 if __name__ == "__main__":
