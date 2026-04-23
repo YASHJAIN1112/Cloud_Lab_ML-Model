@@ -104,7 +104,7 @@ def prepare_input(payload: dict) -> pd.DataFrame:
 
 
 def main() -> None:
-    st.set_page_config(page_title="Smart Manufacturing Predictor", page_icon="⚙️", layout="wide")
+    st.set_page_config(page_title="Smart Manufacturing", page_icon="⚙️", layout="wide")
     st.markdown(
         """
         <style>
